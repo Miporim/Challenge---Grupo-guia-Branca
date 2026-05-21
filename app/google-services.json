@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "760226694391",
+    "project_id": "challenge---grupo-guia-branca",
+    "storage_bucket": "challenge---grupo-guia-branca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:760226694391:android:1c884c9912da6bf3073ff2",
+        "android_client_info": {
+          "package_name": "br.com.fiap.challenge_grupo_guia_branca"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHLW07TGB6XP5bF4MMbTmiplO9x-nX0FA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
