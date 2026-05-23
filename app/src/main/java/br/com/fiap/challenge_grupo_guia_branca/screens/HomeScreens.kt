@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun OperadorHomeScreen(navController: NavController) {
@@ -24,6 +25,17 @@ fun OperadorHomeScreen(navController: NavController) {
         HomeButton(
             text = "Minhas ideias",
             onClick = { navController.navigate("operador_minhas_ideias") }
+        )
+        HomeButton(
+            text = "Sair",
+            onClick = {
+                FirebaseAuth.getInstance().signOut()
+                navController.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+            }
         )
     }
 }
@@ -40,6 +52,17 @@ fun GestorHomeScreen(navController: NavController) {
         HomeButton(
             text = "Criar projeto",
             onClick = { navController.navigate("gestor_criar_projeto") }
+        )
+        HomeButton(
+            text = "Sair",
+            onClick = {
+                FirebaseAuth.getInstance().signOut()
+                navController.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+            }
         )
     }
 }
@@ -60,6 +83,17 @@ fun LiderHomeScreen(navController: NavController) {
         HomeButton(
             text = "Indicadores",
             onClick = { navController.navigate("lider_indicadores") }
+        )
+        HomeButton(
+            text = "Sair",
+            onClick = {
+                FirebaseAuth.getInstance().signOut()
+                navController.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                }
+            }
         )
     }
 }
