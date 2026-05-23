@@ -91,4 +91,8 @@ object AuthManager {
                 onError(it.message ?: "Erro ao desfazer cadastro")
             }
     }
+    fun logout() {
+
+        FirebaseAuth.getInstance().signOut()
+    }
 }

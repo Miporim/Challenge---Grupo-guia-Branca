@@ -76,4 +76,28 @@ class FirestoreManager {
             Result.failure(e)
         }
     }
+    suspend fun saveIdea(
+        titulo: String,
+        descricao: String
+    ): Result<Unit> {
+
+        return try {
+
+            val ideia = hashMapOf(
+                "titulo" to titulo,
+                "descricao" to descricao,
+                "createdAt" to Date()
+            )
+
+            db.collection("ideias")
+                .add(ideia)
+                .await()
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+
+            Result.failure(e)
+        }
+    }
 }

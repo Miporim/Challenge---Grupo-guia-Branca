@@ -9,7 +9,12 @@ import br.com.fiap.challenge_grupo_guia_branca.screens.LiderHomeScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.LoginScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.OperadorHomeScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.RegisterScreen
-import br.com.fiap.challenge_grupo_guia_branca.screens.TemporaryFeatureScreen
+import br.com.fiap.challenge_grupo_guia_branca.screens.ideia.CreateIdeaScreen
+import br.com.fiap.challenge_grupo_guia_branca.screens.ideia.IdeaListScreen
+import br.com.fiap.challenge_grupo_guia_branca.screens.dashbord.DashboardScreen
+import br.com.fiap.challenge_grupo_guia_branca.screens.projeto.CreateProjectScreen
+import br.com.fiap.challenge_grupo_guia_branca.screens.projeto.ProjectListScreen
+import br.com.fiap.challenge_grupo_guia_branca.screens.orientacao.OrientationScreen
 
 @Composable
 fun AppNavigation() {
@@ -41,67 +46,28 @@ fun AppNavigation() {
             LiderHomeScreen(navController)
         }
 
-        composable("operador_adicionar_ideia") {
-            TemporaryFeatureScreen(
-                navController = navController,
-                title = "Adicionar ideia",
-                description = "Tela onde o operador vai cadastrar uma nova ideia ou problema."
-            )
+        composable("create_idea") {
+            CreateIdeaScreen()
         }
 
-        composable("operador_minhas_ideias") {
-            TemporaryFeatureScreen(
-                navController = navController,
-                title = "Minhas ideias",
-                description = "Tela onde o operador vai consultar o historico das ideias cadastradas."
-            )
+        composable("idea_list") {
+            IdeaListScreen()
         }
 
-        composable("gestor_ideias_operadores") {
-            TemporaryFeatureScreen(
-                navController = navController,
-                title = "Ideias dos operadores",
-                description = "Tela onde o gestor vai visualizar e avaliar as ideias cadastradas."
-            )
+        composable("dashboard") {
+            DashboardScreen()
         }
 
-        composable("gestor_criar_projeto") {
-            TemporaryFeatureScreen(
-                navController = navController,
-                title = "Criar projeto",
-                description = "Tela onde o gestor vai criar um projeto a partir de uma ideia aprovada."
-            )
-        }
-        composable("gestor_meus_projetos") {
-            TemporaryFeatureScreen(
-                navController = navController,
-                title = "Ver projeto",
-                description = "Tela onde o gestor vai visualizar seus próprios projetos."
-            )
+        composable("create_project") {
+            CreateProjectScreen()
         }
 
-        composable("lider_dashboard") {
-            TemporaryFeatureScreen(
-                navController = navController,
-                title = "Dashboard",
-                description = "Tela onde a lideranca vai acompanhar a visao geral dos resultados."
-            )
+        composable("project_list") {
+            ProjectListScreen()
         }
 
-        composable("lider_projetos") {
-            TemporaryFeatureScreen(
-                navController = navController,
-                title = "Ver Projetos",
-                description = "Tela onde a lideranca vai consultar os projetos em andamento."
-            )
-        }
-
-        composable("lider_indicadores") {
-            TemporaryFeatureScreen(
-                navController = navController,
-                title = "Indicadores",
-                description = "Tela onde a lideranca vai visualizar indicadores de impacto e ROI."
-            )
+        composable("orientations") {
+            OrientationScreen()
         }
     }
 }

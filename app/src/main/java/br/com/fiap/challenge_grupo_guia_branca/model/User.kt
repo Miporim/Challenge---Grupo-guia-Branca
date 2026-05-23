@@ -1,7 +1,6 @@
 // User.kt
 package br.com.fiap.challenge_grupo_guia_branca.model
 
-import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
 data class User(
