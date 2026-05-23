@@ -1,5 +1,7 @@
 package br.com.fiap.challenge_grupo_guia_branca.screens.ideia
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,18 +15,51 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.navArgument
 import br.com.fiap.challenge_grupo_guia_branca.firebase.FirestoreManager
+import br.com.fiap.challenge_grupo_guia_branca.model.Idea
+import br.com.fiap.challenge_grupo_guia_branca.repository.IdeaRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
-fun CreateIdeaScreen() {
+fun CreateIdeaScreen(
+    navController: NavController,
+    ideaId: String
+) {
 
+    // variáveis de estado
     var titulo by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
-    val firestoreManager = remember { FirestoreManager() }
-    val coroutineScope = rememberCoroutineScope()
-    var mensagem by remember { mutableStateOf("") }
+    var isNewIdea by remember {mutableStateOf(true)}
+
+    // Acesso ao banco de dados
+    val ideaRepository = IdeaRepository()
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    var idea = Idea()
+
+    // Verifica se ideia é nova ou não
+    isNewIdea = ideaId == ""
+    if (!isNewIdea) {
+        LaunchedEffect(Unit) {
+
+            scope.launch {
+
+                idea = ideaRepository.getIdeaById(ideaId)!!
+
+                titulo = idea.title ?: ""
+
+                descricao = idea.description ?: ""
+            }
+        }
+
+    }
 
 
     Column(
@@ -48,7 +83,8 @@ fun CreateIdeaScreen() {
             label = {
                 Text("Título")
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = isNewIdea || (idea.totalVotes != 0)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -61,42 +97,133 @@ fun CreateIdeaScreen() {
             label = {
                 Text("Descrição")
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = isNewIdea || (idea.totalVotes != 0)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
-            onClick = {
+        if (idea.totalVotes == 0) {
+            Button(
+                onClick = {
 
-                coroutineScope.launch {
+                    if (isNewIdea) {
+                        scope.launch {
+                            try {
+                                val newIdea = Idea(
 
-                    firestoreManager.saveIdea(
-                        titulo,
-                        descricao
-                    )
-                        .onSuccess {
+                                    title = titulo,
 
-                            mensagem = "Ideia salva com sucesso!"
+                                    description = descricao,
+                                    userCreator = FirebaseAuth
+                                        .getInstance()
+                                        .currentUser
+                                        ?.uid ?: ""
+                                )
 
-                            titulo = ""
-                            descricao = ""
+                                ideaRepository.createIdea(newIdea)
+
+                                Toast.makeText(
+                                    context,
+                                    "Ideia salva com sucesso!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                navController.navigate("home_operador")
+
+                            } catch (e: Exception) {
+
+                                Toast.makeText(
+                                    context,
+                                    "Erro: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
+                    } else {
+                        scope.launch {
 
-                        .onFailure {
+                            try {
 
-                            mensagem = it.message ?: "Erro ao salvar ideia"
+                                val updatedIdea = Idea(
+
+                                    id = ideaId,
+
+                                    title = titulo,
+
+                                    description = descricao,
+
+                                    userCreator = FirebaseAuth
+                                        .getInstance()
+                                        .currentUser
+                                        ?.uid ?: ""
+                                )
+
+                                ideaRepository.updateIdea(updatedIdea)
+
+                                Toast.makeText(
+                                    context,
+                                    "Ideia modificada com sucesso!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                            } catch (e: Exception) {
+
+                                Log.e("FIREBASE", e.message.toString())
+                            }
                         }
+                    }
+
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Text("Salvar Ideia")
+            }
+            if (!isNewIdea && idea.totalVotes == 0) {
+                Button(
+                    onClick = {
+                        scope.launch {
+
+                            try {
+                                Log.e("FIREBASE", ideaId)
+                                ideaRepository.deleteIdea(ideaId)
+
+                                Toast.makeText(
+                                    context,
+                                    "Ideia removida!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                navController.popBackStack()
+
+                            } catch (e: Exception) {
+                                Log.e("FIREBASE", e.message.toString())
+                                Toast.makeText(
+                                    context,
+                                    e.message,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                {
+                    Text("Deletar Ideia")
                 }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    navController.popBackStack()
+                }
+            ) {
+                Text("Voltar")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Salvar Ideia")
         }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(text = mensagem)
     }
 }
 

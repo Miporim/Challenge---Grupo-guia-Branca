@@ -46,12 +46,28 @@ fun AppNavigation() {
             LiderHomeScreen(navController)
         }
 
+        // Ideias
         composable("create_idea") {
-            CreateIdeaScreen()
+            CreateIdeaScreen(
+                navController,
+                ideaId = ""
+            )
+        }
+
+        composable("edit_idea/{ideaId}") {
+                backStackEntry ->
+
+            val ideaId =
+                backStackEntry.arguments?.getString("ideaId")
+
+            CreateIdeaScreen(
+                navController = navController,
+                ideaId = ideaId ?: ""
+            )
         }
 
         composable("idea_list") {
-            IdeaListScreen()
+            IdeaListScreen(navController)
         }
 
         composable("dashboard") {
