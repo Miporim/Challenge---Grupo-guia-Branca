@@ -72,6 +72,13 @@ fun AppNavigation() {
                 description = "Tela onde o gestor vai criar um projeto a partir de uma ideia aprovada."
             )
         }
+        composable("gestor_meus_projetos") {
+            TemporaryFeatureScreen(
+                navController = navController,
+                title = "Ver projeto",
+                description = "Tela onde o gestor vai visualizar seus próprios projetos."
+            )
+        }
 
         composable("lider_dashboard") {
             TemporaryFeatureScreen(

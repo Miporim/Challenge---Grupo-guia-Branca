@@ -54,6 +54,10 @@ fun GestorHomeScreen(navController: NavController) {
             onClick = { navController.navigate("gestor_criar_projeto") }
         )
         HomeButton(
+            text = "Ver meus projetos",
+            onClick = { navController.navigate("gestor_meus_projetos") }
+        )
+        HomeButton(
             text = "Sair",
             onClick = {
                 FirebaseAuth.getInstance().signOut()
