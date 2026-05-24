@@ -12,6 +12,7 @@ import br.com.fiap.challenge_grupo_guia_branca.screens.RegisterScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.ideia.CreateIdeaScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.ideia.IdeaListScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.dashbord.DashboardScreen
+import br.com.fiap.challenge_grupo_guia_branca.screens.ideia.IdeaListGestorScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.projeto.CreateProjectScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.projeto.ProjectListScreen
 import br.com.fiap.challenge_grupo_guia_branca.screens.orientacao.OrientationScreen
@@ -66,8 +67,12 @@ fun AppNavigation() {
             )
         }
 
-        composable("idea_list") {
+        composable("idea_list_operador") {
             IdeaListScreen(navController)
+        }
+
+        composable("idea_list_gestor") {
+            IdeaListGestorScreen(navController)
         }
 
         composable("dashboard") {

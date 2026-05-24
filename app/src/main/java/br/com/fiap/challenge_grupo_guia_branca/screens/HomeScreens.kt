@@ -45,7 +45,7 @@ fun OperadorHomeScreen(navController: NavController) {
 
         Button(
             onClick = {
-                navController.navigate("idea_list")
+                navController.navigate("idea_list_operador")
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -123,7 +123,7 @@ fun GestorHomeScreen(navController: NavController) {
 
         Button(
             onClick = {
-                navController.navigate("idea_list")
+                navController.navigate("idea_list_gestor")
             },
             modifier = Modifier.fillMaxWidth()
         ) {

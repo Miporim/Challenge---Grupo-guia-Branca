@@ -2,6 +2,7 @@ package br.com.fiap.challenge_grupo_guia_branca.repository;
 
 import android.util.Log
 import br.com.fiap.challenge_grupo_guia_branca.model.Idea
+import br.com.fiap.challenge_grupo_guia_branca.model.PriorityIdea
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -29,6 +30,14 @@ class IdeaRepository {
 
                 Log.e("FIREBASE", it.message.toString())
             }
+    }
+
+    suspend fun getIdeas(): List<Idea> {
+
+        return collection
+            .get()
+            .await()
+            .toObjects(Idea::class.java)
     }
 
     suspend fun getIdeasByUser(
@@ -71,5 +80,63 @@ class IdeaRepository {
             .document(ideaId)
             .delete()
             .await()
+    }
+
+    suspend fun updateIdeaScore(
+        ideaId: String
+    ) {
+
+        val priorityVotes = collection
+            .document(ideaId)
+            .collection("priorityVote")
+            .get()
+            .await()
+
+        var total = 0
+
+        for (document in priorityVotes.documents) {
+
+            val vote =
+                document.toObject(PriorityIdea::class.java)
+
+            total += vote?.score ?: 0
+        }
+
+        collection
+            .document(ideaId)
+            .update(
+
+                mapOf(
+                    "scoreTotal" to total,
+                    "totalVotes" to priorityVotes.size()
+                )
+            )
+            .await()
+    }
+
+    suspend fun voteIdea(
+
+        ideaId: String,
+
+        gestorId: String,
+
+        score: Int
+    ) {
+
+        val priorityIdea = PriorityIdea(
+
+            gestorId = gestorId,
+
+            score = score
+        )
+
+        collection
+            .document(ideaId)
+            .collection("priorityVote")
+            .document(gestorId)
+            .set(priorityIdea)
+            .await()
+
+        updateIdeaScore(ideaId)
     }
 }
