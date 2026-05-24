@@ -117,7 +117,14 @@ fun CreateIdeaScreen(
             if (idea.totalVotes == 0) {
                 Button(
                     onClick = {
-
+                        if (titulo.isBlank()) {
+                            Toast.makeText(
+                                context,
+                                "Título não pode ser nulo",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
                         if (isNewIdea) {
                             scope.launch {
                                 try {
