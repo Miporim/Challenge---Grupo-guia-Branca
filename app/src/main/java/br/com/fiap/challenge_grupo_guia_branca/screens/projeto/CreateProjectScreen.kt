@@ -183,52 +183,55 @@ fun CreateProjectScreen(
                     Text(if (isEditing) "Salvar Alterações" else "Criar Projeto")
                 }
 
-                Button(
-                    onClick = {
+                if (projetoId != "") {
+                    Button(
+                        onClick = {
 
-                        isLoading = true
-                        mensagem = ""
+                            isLoading = true
+                            mensagem = ""
 
-                        coroutineScope.launch {
+                            coroutineScope.launch {
 
-                            val projeto = Projeto(
-                                id = projetoId,
-                                title = title.trim(),
-                                description = description.trim(),
+                                val projeto = Projeto(
+                                    id = projetoId,
+                                    title = title.trim(),
+                                    description = description.trim(),
 
-                                prazoInicial = stringToTimestamp(prazoInicial),
+                                    prazoInicial = stringToTimestamp(prazoInicial),
 
-                                // DATA DE CONCLUSÃO = AGORA
-                                dataConclusao = System.currentTimeMillis(),
+                                    // DATA DE CONCLUSÃO = AGORA
+                                    dataConclusao = System.currentTimeMillis(),
 
-                                investimento = investimento.toDoubleOrNull() ?: 0.0,
-                                receita = receita.toDoubleOrNull() ?: 0.0,
+                                    investimento = investimento.toDoubleOrNull() ?: 0.0,
+                                    receita = receita.toDoubleOrNull() ?: 0.0,
 
-                                // ENCERRA O PROJETO
-                                projetoEncerrado = true,
+                                    // ENCERRA O PROJETO
+                                    projetoEncerrado = true,
 
-                                userCreator = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-                            )
+                                    userCreator = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                                )
 
-                            repository.updateProjeto(projeto)
-                                .onSuccess {
+                                repository.updateProjeto(projeto)
+                                    .onSuccess {
 
-                                    mensagem = "Projeto encerrado!"
+                                        mensagem = "Projeto encerrado!"
 
-                                    navController?.popBackStack()
-                                }
-                                .onFailure {
+                                        navController?.popBackStack()
+                                    }
+                                    .onFailure {
 
-                                    mensagem = "Erro: ${it.message}"
-                                }
+                                        mensagem = "Erro: ${it.message}"
+                                    }
 
-                            isLoading = false
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
-                ) {
-                    Text("Encerrar Projeto")
+                                isLoading = false
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isLoading
+                    ) {
+                        Text("Encerrar Projeto")
+
+                    }
                 }
             }
         }
