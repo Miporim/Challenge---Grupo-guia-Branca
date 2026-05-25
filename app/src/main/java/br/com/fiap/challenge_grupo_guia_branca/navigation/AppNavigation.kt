@@ -55,12 +55,8 @@ fun AppNavigation() {
             )
         }
 
-        composable("edit_idea/{ideaId}") {
-                backStackEntry ->
-
-            val ideaId =
-                backStackEntry.arguments?.getString("ideaId")
-
+        composable("edit_idea/{ideaId}") { backStackEntry ->
+            val ideaId = backStackEntry.arguments?.getString("ideaId")
             CreateIdeaScreen(
                 navController = navController,
                 ideaId = ideaId ?: ""
@@ -75,20 +71,31 @@ fun AppNavigation() {
             IdeaListGestorScreen(navController)
         }
 
+        // Dashboard
         composable("dashboard") {
             DashboardScreen()
         }
 
+        // Projetos
         composable("create_project") {
-            CreateProjectScreen()
+            CreateProjectScreen(navController = navController)
+        }
+
+        composable("edit_project/{projetoId}") { backStackEntry ->
+            val projetoId = backStackEntry.arguments?.getString("projetoId")
+            CreateProjectScreen(
+                navController = navController,
+                projetoId = projetoId ?: ""
+            )
         }
 
         composable("project_list") {
-            ProjectListScreen()
+            ProjectListScreen(navController = navController)
         }
 
+        // Orientações
         composable("orientations") {
-            OrientationScreen()
+            OrientationScreen(navController = navController)
         }
     }
 }
