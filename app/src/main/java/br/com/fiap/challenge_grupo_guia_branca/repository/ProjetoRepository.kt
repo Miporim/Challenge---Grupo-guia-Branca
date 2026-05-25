@@ -40,6 +40,20 @@ class ProjetoRepository {
         }
     }
 
+    suspend fun getProjetosByUserId(
+        userId: String
+    ): List<Projeto> {
+        return try {
+            collection
+                .whereEqualTo("userCreator", userId)
+                .get()
+                .await()
+                .toObjects(Projeto::class.java)
+        } catch (e: Exception) {
+            Log.e("FIREBASE", "Erro ao buscar projetos: ${e.message}")
+            emptyList()
+        }
+    }
 
     suspend fun getProjetoById(projetoId: String): Projeto? {
         return try {

@@ -39,7 +39,7 @@ fun ProjectListScreen(
     val isGestor = currentRole == User.ROLE_GESTOR
 
     LaunchedEffect(Unit) {
-        projetos = repository.getProjetos()
+        projetos = repository.getProjetosByUserId(FirebaseAuth.getInstance().currentUser?.uid ?: "")
         isLoading = false
     }
 

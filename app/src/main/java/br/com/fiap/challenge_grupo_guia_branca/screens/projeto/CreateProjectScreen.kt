@@ -102,7 +102,7 @@ fun CreateProjectScreen(
             OutlinedTextField(
                 value = prazoInicial,
                 onValueChange = { prazoInicial = it },
-                label = { Text("Data Inicial") },
+                label = { Text("Prazo de Entrega") },
                 placeholder = { Text("dd/MM/yyyy") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
