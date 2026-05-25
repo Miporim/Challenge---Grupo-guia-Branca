@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -161,25 +162,40 @@ fun ProjectListScreen(
 
                             if (isGestor) {
                                 Row {
-                                    IconButton(
-                                        onClick = {
-                                            navController?.navigate("edit_project/${projeto.id}")
+                                    if (!projeto.projetoEncerrado) {
+                                        IconButton(
+                                            onClick = {
+                                                navController?.navigate("edit_project/${projeto.id}")
+                                            }
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Edit,
+                                                contentDescription = "Editar",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
                                         }
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Edit,
-                                            contentDescription = "Editar",
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
+                                        IconButton(
+                                            onClick = { projetoParaDeletar = projeto }
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = "Excluir",
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        }
                                     }
-                                    IconButton(
-                                        onClick = { projetoParaDeletar = projeto }
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Delete,
-                                            contentDescription = "Excluir",
-                                            tint = MaterialTheme.colorScheme.error
-                                        )
+                                    else {
+                                        IconButton(
+                                            onClick = {
+                                                navController?.navigate("edit_project/${projeto.id}")
+                                            }
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Search,
+                                                contentDescription = "Editar",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
                                     }
                                 }
                             }

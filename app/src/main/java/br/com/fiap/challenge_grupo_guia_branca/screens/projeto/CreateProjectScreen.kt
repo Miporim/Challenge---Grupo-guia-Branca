@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import br.com.fiap.challenge_grupo_guia_branca.model.Projeto
 import br.com.fiap.challenge_grupo_guia_branca.repository.ProjetoRepository
+import br.com.fiap.challenge_grupo_guia_branca.utils.stringToTimestamp
+import br.com.fiap.challenge_grupo_guia_branca.utils.timestampToString
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
@@ -29,10 +31,14 @@ fun CreateProjectScreen(
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+
+    var prazoInicial by remember { mutableStateOf("") }
+
     var investimento by remember { mutableStateOf("") }
     var receita by remember { mutableStateOf("") }
     var mensagem by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var isFinished by remember { mutableStateOf(false) }
 
     LaunchedEffect(projetoId) {
         if (isEditing) {
@@ -43,6 +49,8 @@ fun CreateProjectScreen(
                 description = it.description
                 investimento = it.investimento.toString()
                 receita = it.receita.toString()
+                prazoInicial = timestampToString(it.prazoInicial)
+                isFinished = it.projetoEncerrado
             }
             isLoading = false
         }
@@ -77,7 +85,8 @@ fun CreateProjectScreen(
                 onValueChange = { title = it },
                 label = { Text("Título do Projeto") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                readOnly = isFinished
             )
 
             OutlinedTextField(
@@ -85,7 +94,20 @@ fun CreateProjectScreen(
                 onValueChange = { description = it },
                 label = { Text("Descrição") },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 3
+                minLines = 3,
+                readOnly = isFinished
+            )
+
+            // DATA INICIAL
+            OutlinedTextField(
+                value = prazoInicial,
+                onValueChange = { prazoInicial = it },
+                label = { Text("Data Inicial") },
+                placeholder = { Text("dd/MM/yyyy") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                readOnly = isFinished
             )
 
             OutlinedTextField(
@@ -94,7 +116,8 @@ fun CreateProjectScreen(
                 label = { Text("Investimento (R$)") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true
+                singleLine = true,
+                readOnly = isFinished
             )
 
             OutlinedTextField(
@@ -103,7 +126,8 @@ fun CreateProjectScreen(
                 label = { Text("Receita Esperada (R$)") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true
+                singleLine = true,
+                readOnly = isFinished
             )
 
             if (mensagem.isNotBlank()) {
@@ -116,43 +140,96 @@ fun CreateProjectScreen(
                 )
             }
 
-            Button(
-                onClick = {
-                    if (title.isBlank() || description.isBlank()) {
-                        mensagem = "Preencha título e descrição"
-                        return@Button
-                    }
-                    isLoading = true
-                    mensagem = ""
-                    coroutineScope.launch {
-                        val projeto = Projeto(
-                            id = if (isEditing) projetoId else "",
-                            title = title.trim(),
-                            description = description.trim(),
-                            investimento = investimento.toDoubleOrNull() ?: 0.0,
-                            receita = receita.toDoubleOrNull() ?: 0.0,
-                            userCreator = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-                        )
-                        val result = if (isEditing) {
-                            repository.updateProjeto(projeto)
-                        } else {
-                            repository.createProjeto(projeto)
+            if (!isFinished) {
+                Button(
+                    onClick = {
+                        if (title.isBlank() || description.isBlank() || prazoInicial.isBlank()) {
+                            mensagem = "Preencha título e descrição"
+                            return@Button
                         }
-                        result
-                            .onSuccess {
-                                mensagem = if (isEditing) "Projeto atualizado!" else "Projeto criado!"
-                                navController?.popBackStack()
+                        isLoading = true
+                        mensagem = ""
+                        coroutineScope.launch {
+                            val projeto = Projeto(
+                                id = if (isEditing) projetoId else "",
+                                title = title.trim(),
+                                description = description.trim(),
+                                prazoInicial = stringToTimestamp(prazoInicial),
+                                investimento = investimento.toDoubleOrNull() ?: 0.0,
+                                receita = receita.toDoubleOrNull() ?: 0.0,
+                                projetoEncerrado = false,
+                                userCreator = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                            )
+                            val result = if (isEditing) {
+                                repository.updateProjeto(projeto)
+                            } else {
+                                repository.createProjeto(projeto)
                             }
-                            .onFailure {
-                                mensagem = "Erro: ${it.message}"
-                            }
-                        isLoading = false
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) {
-                Text(if (isEditing) "Salvar Alterações" else "Criar Projeto")
+                            result
+                                .onSuccess {
+                                    mensagem =
+                                        if (isEditing) "Projeto atualizado!" else "Projeto criado!"
+                                    navController?.popBackStack()
+                                }
+                                .onFailure {
+                                    mensagem = "Erro: ${it.message}"
+                                }
+                            isLoading = false
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    Text(if (isEditing) "Salvar Alterações" else "Criar Projeto")
+                }
+
+                Button(
+                    onClick = {
+
+                        isLoading = true
+                        mensagem = ""
+
+                        coroutineScope.launch {
+
+                            val projeto = Projeto(
+                                id = projetoId,
+                                title = title.trim(),
+                                description = description.trim(),
+
+                                prazoInicial = stringToTimestamp(prazoInicial),
+
+                                // DATA DE CONCLUSÃO = AGORA
+                                dataConclusao = System.currentTimeMillis(),
+
+                                investimento = investimento.toDoubleOrNull() ?: 0.0,
+                                receita = receita.toDoubleOrNull() ?: 0.0,
+
+                                // ENCERRA O PROJETO
+                                projetoEncerrado = true,
+
+                                userCreator = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                            )
+
+                            repository.updateProjeto(projeto)
+                                .onSuccess {
+
+                                    mensagem = "Projeto encerrado!"
+
+                                    navController?.popBackStack()
+                                }
+                                .onFailure {
+
+                                    mensagem = "Erro: ${it.message}"
+                                }
+
+                            isLoading = false
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    Text("Encerrar Projeto")
+                }
             }
         }
     }
