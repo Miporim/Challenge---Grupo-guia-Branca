@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import br.com.fiap.challenge_grupo_guia_branca.model.Projeto
 import br.com.fiap.challenge_grupo_guia_branca.repository.ProjetoRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -129,7 +130,8 @@ fun CreateProjectScreen(
                             title = title.trim(),
                             description = description.trim(),
                             investimento = investimento.toDoubleOrNull() ?: 0.0,
-                            receita = receita.toDoubleOrNull() ?: 0.0
+                            receita = receita.toDoubleOrNull() ?: 0.0,
+                            userCreator = FirebaseAuth.getInstance().currentUser?.uid ?: ""
                         )
                         val result = if (isEditing) {
                             repository.updateProjeto(projeto)

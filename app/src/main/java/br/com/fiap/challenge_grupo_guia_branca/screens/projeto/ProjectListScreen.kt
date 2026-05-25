@@ -1,5 +1,6 @@
 package br.com.fiap.challenge_grupo_guia_branca.screens.projeto
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +19,7 @@ import br.com.fiap.challenge_grupo_guia_branca.firebase.AuthManager
 import br.com.fiap.challenge_grupo_guia_branca.model.Projeto
 import br.com.fiap.challenge_grupo_guia_branca.model.User
 import br.com.fiap.challenge_grupo_guia_branca.repository.ProjetoRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,6 +51,8 @@ fun ProjectListScreen(
                 TextButton(
                     onClick = {
                         coroutineScope.launch {
+                            Log.e("FIREBASE", projeto.userCreator)
+                            Log.e("FIREBASE", FirebaseAuth.getInstance().currentUser?.uid ?: "")
                             repository.deleteProjeto(projeto.id)
                             projetos = repository.getProjetos()
                             projetoParaDeletar = null
