@@ -18,6 +18,7 @@ import br.com.fiap.challenge_grupo_guia_branca.firebase.AuthManager
 import br.com.fiap.challenge_grupo_guia_branca.model.Orientacao
 import br.com.fiap.challenge_grupo_guia_branca.model.User
 import br.com.fiap.challenge_grupo_guia_branca.repository.OrientacaoRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,12 +48,15 @@ fun OrientationScreen(
     LaunchedEffect(Unit) { loadOrientacoes() }
 
     if (showDialog) {
+
+        var id by remember { mutableStateOf(orientacaoEmEdicao?.id ?: "") }
+        var title by remember { mutableStateOf(orientacaoEmEdicao?.title ?: "") }
+        var description by remember { mutableStateOf(orientacaoEmEdicao?.description ?: "") }
+
         AlertDialog(
             onDismissRequest = { showDialog = false; orientacaoEmEdicao = null },
             title = { Text(if (orientacaoEmEdicao != null) "Editar Orientação" else "Nova Orientação") },
             text = {
-                var title by remember { mutableStateOf(orientacaoEmEdicao?.title ?: "") }
-                var description by remember { mutableStateOf(orientacaoEmEdicao?.description ?: "") }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = title,
@@ -72,7 +76,14 @@ fun OrientationScreen(
             confirmButton = {
                 TextButton(onClick = {
                     coroutineScope.launch {
-                        val orientacao = orientacaoEmEdicao?.copy() ?: Orientacao()
+                        //val orientacao = orientacaoEmEdicao?.copy() ?: Orientacao()
+                        val orientacao = Orientacao(
+                            id = id,
+                            title = title,
+                            description = description,
+                            userCreator = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                        )
+
                         if (orientacaoEmEdicao != null) {
                             repository.updateOrientacao(orientacao)
                         } else {

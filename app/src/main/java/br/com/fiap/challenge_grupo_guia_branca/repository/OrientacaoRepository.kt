@@ -21,6 +21,7 @@ class OrientacaoRepository {
             orientacao.createdAt = System.currentTimeMillis()
             orientacao.updatedAt = System.currentTimeMillis()
             document.set(orientacao).await()
+            Log.e("FIREBASE", "Criou certo: $orientacao")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e("FIREBASE", "Erro ao criar orientacao: ${e.message}")
@@ -63,6 +64,7 @@ class OrientacaoRepository {
                 .document(orientacao.id)
                 .set(orientacao)
                 .await()
+            Log.e("FIREBASE", "Editou certo: $orientacao")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e("FIREBASE", "Erro ao atualizar orientacao: ${e.message}")
