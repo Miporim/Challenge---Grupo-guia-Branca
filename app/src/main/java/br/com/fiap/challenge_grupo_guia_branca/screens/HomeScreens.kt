@@ -179,17 +179,6 @@ fun LiderHomeScreen(navController: NavController) {
 
         Button(
             onClick = {
-                navController.navigate("project_list")
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Projetos")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
                 navController.navigate("orientations")
             },
             modifier = Modifier.fillMaxWidth()

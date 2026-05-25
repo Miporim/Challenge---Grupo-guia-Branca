@@ -73,7 +73,7 @@ fun AppNavigation() {
 
         // Dashboard
         composable("dashboard") {
-            DashboardScreen()
+            DashboardScreen(navController = navController)
         }
 
         // Projetos
