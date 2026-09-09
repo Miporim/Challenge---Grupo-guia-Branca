@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: aguiabranca
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/aguiabranca}
+      auto-index-creation: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:chave-de-desenvolvimento-com-mais-de-32-caracteres}
+    horas-validade: 8
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
