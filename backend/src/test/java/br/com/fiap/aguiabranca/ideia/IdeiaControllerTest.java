@@ -95,6 +95,18 @@ class IdeiaControllerTest {
     }
 
     @Test
+    void criarSemEstrategiaIdRetorna400() throws Exception {
+        // Seção 8, teste #3: "Ideia sin estrategiaId → 400".
+        IdeiaRequest semEstrategia = new IdeiaRequest("Título", "Descrição", null, Nivel.ALTO, Nivel.BAIXO, null);
+
+        mockMvc.perform(post("/api/ideias")
+                        .with(user("operador-1").roles("OPERADOR"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(semEstrategia)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void listarMinhasRetorna200() throws Exception {
         when(ideiaService.listarMinhas(any())).thenReturn(Page.empty());
 

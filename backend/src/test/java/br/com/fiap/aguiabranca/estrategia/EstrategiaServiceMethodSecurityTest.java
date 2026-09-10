@@ -116,6 +116,28 @@ class EstrategiaServiceMethodSecurityTest {
     }
 
     @Test
+    @WithMockUser(roles = "LIDER")
+    void liderConsegueAtualizar() {
+        Estrategia estrategia = Estrategia.builder().id("id-1").campanha("Ciclo 2026/1").status(EstrategiaStatus.ENCERRADA).build();
+        when(estrategiaRepository.findById("id-1")).thenReturn(Optional.of(estrategia));
+        when(estrategiaRepository.save(any(Estrategia.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(estrategiaRepository.findByCampanhaAndStatus(any(), any())).thenReturn(List.of());
+
+        assertDoesNotThrow(() -> estrategiaService.atualizar("id-1", requestValido()));
+    }
+
+    @Test
+    @WithMockUser(roles = "LIDER")
+    void liderConsegueExcluir() {
+        Estrategia estrategia = Estrategia.builder().id("id-1").build();
+        when(estrategiaRepository.findById("id-1")).thenReturn(Optional.of(estrategia));
+        when(ideiaRepository.existsByEstrategiaId("id-1")).thenReturn(false);
+        when(projetoRepository.existsByEstrategiaId("id-1")).thenReturn(false);
+
+        assertDoesNotThrow(() -> estrategiaService.excluir("id-1"));
+    }
+
+    @Test
     @WithMockUser(roles = "GESTOR")
     void gestorNaoConsegueListarComPreAuthorizeAusente() {
         // listar() não tem @PreAuthorize — é leitura, liberada por rota para

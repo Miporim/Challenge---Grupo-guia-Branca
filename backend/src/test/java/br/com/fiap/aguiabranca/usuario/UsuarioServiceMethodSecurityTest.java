@@ -115,4 +115,21 @@ class UsuarioServiceMethodSecurityTest {
         assertThrows(AccessDeniedException.class,
                 () -> usuarioService.alterarAtivo("qualquer-id", false));
     }
+
+    @Test
+    @WithMockUser(roles = "LIDER")
+    void liderConsegueAlterarAtivo() {
+        Usuario usuario = Usuario.builder().id("id-1").role(Role.OPERADOR).ativo(true).build();
+        when(usuarioRepository.findById("id-1")).thenReturn(java.util.Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() -> usuarioService.alterarAtivo("id-1", false));
+    }
+
+    @Test
+    @WithMockUser(roles = "OPERADOR")
+    void operadorNaoConsegueAlterarAtivo() {
+        assertThrows(AccessDeniedException.class,
+                () -> usuarioService.alterarAtivo("qualquer-id", false));
+    }
 }

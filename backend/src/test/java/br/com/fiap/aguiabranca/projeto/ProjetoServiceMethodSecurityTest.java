@@ -113,6 +113,28 @@ class ProjetoServiceMethodSecurityTest {
         assertThrows(AccessDeniedException.class, () -> projetoService.criar(requestValido()));
     }
 
+    private br.com.fiap.aguiabranca.projeto.dto.AtualizarProjetoRequest requestAtualizacaoValido() {
+        return new br.com.fiap.aguiabranca.projeto.dto.AtualizarProjetoRequest("T", "D", "estrategia-1",
+                BigDecimal.TEN, Instant.now(), Instant.now().plusSeconds(3600));
+    }
+
+    @Test
+    void gestorConsegueAtualizar() {
+        autenticarComo("gestor-1", "GESTOR");
+        when(estrategiaService.buscarPorId("estrategia-1"))
+                .thenReturn(Estrategia.builder().id("estrategia-1").status(EstrategiaStatus.VIGENTE).build());
+        when(projetoRepository.findById("id-1")).thenReturn(Optional.of(Projeto.builder().id("id-1").build()));
+        when(projetoRepository.save(any(Projeto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertDoesNotThrow(() -> projetoService.atualizar("id-1", requestAtualizacaoValido()));
+    }
+
+    @Test
+    void operadorNaoConsegueAtualizar() {
+        autenticarComo("operador-1", "OPERADOR");
+        assertThrows(AccessDeniedException.class, () -> projetoService.atualizar("id-1", requestAtualizacaoValido()));
+    }
+
     @Test
     void operadorNaoConsegueAtualizarProgresso() {
         autenticarComo("operador-1", "OPERADOR");
