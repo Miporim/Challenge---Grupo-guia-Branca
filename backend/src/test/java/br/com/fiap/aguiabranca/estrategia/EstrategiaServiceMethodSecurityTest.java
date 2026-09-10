@@ -24,6 +24,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
 import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
+import br.com.fiap.aguiabranca.projeto.ProjetoRepository;
 
 /**
  * Prova da matriz de acesso de {@link EstrategiaService} — mesmo padrão de
@@ -50,6 +51,9 @@ class EstrategiaServiceMethodSecurityTest {
 
     @MockitoBean
     private IdeiaRepository ideiaRepository;
+
+    @MockitoBean
+    private ProjetoRepository projetoRepository;
 
     @Autowired
     private EstrategiaService estrategiaService;

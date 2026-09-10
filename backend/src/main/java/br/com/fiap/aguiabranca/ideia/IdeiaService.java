@@ -95,6 +95,18 @@ public class IdeiaService {
         ideiaRepository.delete(ideia);
     }
 
+    /**
+     * Vincula a ideia a um projeto recém-criado — chamado por
+     * {@code ProjetoService.criar}, que já validou (antes de criar o
+     * projeto) que a ideia existe e ainda não tem {@code projetoId}.
+     */
+    @PreAuthorize("hasRole('GESTOR')")
+    public void vincularProjeto(String ideiaId, String projetoId) {
+        Ideia ideia = buscarPorId(ideiaId);
+        ideia.setProjetoId(projetoId);
+        ideiaRepository.save(ideia);
+    }
+
     @PreAuthorize("hasRole('GESTOR')")
     public Ideia priorizar(String id, PriorizacaoRequest request) {
         Ideia ideia = buscarPorId(id);

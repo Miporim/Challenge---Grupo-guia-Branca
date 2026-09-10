@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
 import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
+import br.com.fiap.aguiabranca.projeto.ProjetoRepository;
 import br.com.fiap.aguiabranca.security.SecurityUtils;
 import br.com.fiap.aguiabranca.shared.ConflitoException;
 import br.com.fiap.aguiabranca.shared.RecursoNaoEncontradoException;
@@ -26,6 +27,7 @@ public class EstrategiaService {
     private final EstrategiaRepository estrategiaRepository;
     private final MongoTemplate mongoTemplate;
     private final IdeiaRepository ideiaRepository;
+    private final ProjetoRepository projetoRepository;
 
     @PreAuthorize("hasRole('LIDER')")
     public Estrategia criar(EstrategiaRequest request) {
@@ -95,8 +97,9 @@ public class EstrategiaService {
         if (ideiaRepository.existsByEstrategiaId(id)) {
             throw new ConflitoException("Há ideias vinculadas a esta estratégia");
         }
-        // TODO (Etapa D): devolver 409 também se houver projetos vinculados
-        // — ProjetoRepository ainda não existe.
+        if (projetoRepository.existsByEstrategiaId(id)) {
+            throw new ConflitoException("Há projetos vinculados a esta estratégia");
+        }
         estrategiaRepository.delete(estrategia);
     }
 

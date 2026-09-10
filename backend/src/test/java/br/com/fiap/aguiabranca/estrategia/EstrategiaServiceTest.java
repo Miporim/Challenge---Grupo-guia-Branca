@@ -21,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
 import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
+import br.com.fiap.aguiabranca.projeto.ProjetoRepository;
 import br.com.fiap.aguiabranca.shared.ConflitoException;
 import br.com.fiap.aguiabranca.shared.RecursoNaoEncontradoException;
 
@@ -34,8 +35,9 @@ class EstrategiaServiceTest {
     private final EstrategiaRepository estrategiaRepository = mock(EstrategiaRepository.class);
     private final MongoTemplate mongoTemplate = mock(MongoTemplate.class);
     private final IdeiaRepository ideiaRepository = mock(IdeiaRepository.class);
+    private final ProjetoRepository projetoRepository = mock(ProjetoRepository.class);
     private final EstrategiaService estrategiaService =
-            new EstrategiaService(estrategiaRepository, mongoTemplate, ideiaRepository);
+            new EstrategiaService(estrategiaRepository, mongoTemplate, ideiaRepository, projetoRepository);
 
     @BeforeEach
     void autenticarComoLider() {
@@ -122,6 +124,17 @@ class EstrategiaServiceTest {
         Estrategia estrategia = Estrategia.builder().id("id-1").build();
         when(estrategiaRepository.findById("id-1")).thenReturn(java.util.Optional.of(estrategia));
         when(ideiaRepository.existsByEstrategiaId("id-1")).thenReturn(true);
+
+        assertThrows(ConflitoException.class, () -> estrategiaService.excluir("id-1"));
+        verify(estrategiaRepository, times(0)).delete(any(Estrategia.class));
+    }
+
+    @Test
+    void excluirComProjetosVinculadosLancaConflito() {
+        Estrategia estrategia = Estrategia.builder().id("id-1").build();
+        when(estrategiaRepository.findById("id-1")).thenReturn(java.util.Optional.of(estrategia));
+        when(ideiaRepository.existsByEstrategiaId("id-1")).thenReturn(false);
+        when(projetoRepository.existsByEstrategiaId("id-1")).thenReturn(true);
 
         assertThrows(ConflitoException.class, () -> estrategiaService.excluir("id-1"));
         verify(estrategiaRepository, times(0)).delete(any(Estrategia.class));
