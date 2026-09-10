@@ -12,6 +12,15 @@ app:
   jwt:
     secret: ${JWT_SECRET:chave-de-desenvolvimento-com-mais-de-32-caracteres}
     horas-validade: 8
+  # Secao 7: provider = gemini (default) | groq | ollama — troca de
+  # provedor de IA e so isto, sem tocar em codigo. Ver tambem
+  # application-groq.yaml e application-ollama.yaml.
+  ia:
+    provider: ${IA_PROVIDER:gemini}
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: gemini-2.5-flash-lite
+      base-url: https://generativelanguage.googleapis.com/v1beta
 
 management:
   endpoints:

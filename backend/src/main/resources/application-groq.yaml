@@ -1,0 +1,10 @@
+# Perfil alternativo de IA (seção 7) — Groq via API compatível com
+# OpenAI. Ativar com SPRING_PROFILES_ACTIVE=local,groq (ou o profile que
+# for usado para a conexão) + GROQ_API_KEY.
+app:
+  ia:
+    provider: groq
+    groq:
+      api-key: ${GROQ_API_KEY:}
+      model: llama-3.3-70b-versatile
+      base-url: https://api.groq.com/openai/v1

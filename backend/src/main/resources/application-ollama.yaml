@@ -1,0 +1,10 @@
+# Perfil alternativo de IA (seção 7) — Ollama local, sem custo e sem
+# key. Requer um Ollama rodando em localhost:11434 com o modelo já
+# baixado (ollama pull llama3.2).
+app:
+  ia:
+    provider: ollama
+    ollama:
+      api-key: ${OLLAMA_API_KEY:}
+      model: llama3.2
+      base-url: http://localhost:11434/v1

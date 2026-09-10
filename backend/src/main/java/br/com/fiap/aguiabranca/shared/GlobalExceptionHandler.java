@@ -20,6 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Handler global de erros. Todas as respostas de erro seguem RFC 7807
  * ({@code application/problem+json}) — ver seção 1 da especificação.
+ *
+ * As excecões de {@code ia} (502/503) têm seu próprio
+ * {@code @RestControllerAdvice} em {@code ia.IaExceptionHandler} — não
+ * importadas aqui para não inverter a dependência de pacote (seção 1
+ * lista {@code shared} como fundação, sem depender de pacotes de
+ * domínio).
  */
 @RestControllerAdvice
 @Slf4j

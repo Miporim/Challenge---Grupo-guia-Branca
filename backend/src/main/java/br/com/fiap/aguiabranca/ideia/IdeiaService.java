@@ -127,6 +127,25 @@ public class IdeiaService {
         ideiaRepository.save(ideia);
     }
 
+    /**
+     * Grava o resultado da análise de IA (Etapa G) — chamado por
+     * {@code IaService}, que já validou o JSON contra o schema antes de
+     * chegar aqui. Não é o autor quem chama isto, é o GESTOR analisando;
+     * por isso não usa {@code @ideiaSecurity.ehAutor}.
+     */
+    @PreAuthorize("hasRole('GESTOR')")
+    public Ideia registrarAnaliseIa(String id, br.com.fiap.aguiabranca.ideia.AnaliseIa analise) {
+        Ideia ideia = buscarPorId(id);
+        ideia.setAnaliseIa(analise);
+        ideia.setAtualizadoEm(Instant.now());
+        return ideiaRepository.save(ideia);
+    }
+
+    /** Lista as SUBMETIDA de uma estratégia — usado por {@code IaService} em {@code analise-lote} e no chat. */
+    public List<Ideia> listarSubmetidasPorEstrategia(String estrategiaId) {
+        return ideiaRepository.findByEstrategiaIdAndStatus(estrategiaId, StatusIdeia.SUBMETIDA);
+    }
+
     @PreAuthorize("hasRole('GESTOR')")
     public Ideia priorizar(String id, PriorizacaoRequest request) {
         Ideia ideia = buscarPorId(id);
