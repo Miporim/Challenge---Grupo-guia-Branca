@@ -9,4 +9,10 @@ public interface IdeiaRepository extends MongoRepository<Ideia, String> {
     Page<Ideia> findByAutorId(String autorId, Pageable pageable);
 
     boolean existsByEstrategiaId(String estrategiaId);
+
+    long countByStatusNot(StatusIdeia status);
+
+    long countByStatus(StatusIdeia status);
+
+    long countByProjetoIdIsNotNull();
 }
