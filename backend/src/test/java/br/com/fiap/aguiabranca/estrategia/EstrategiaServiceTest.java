@@ -20,6 +20,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
+import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
+import br.com.fiap.aguiabranca.shared.ConflitoException;
 import br.com.fiap.aguiabranca.shared.RecursoNaoEncontradoException;
 
 /**
@@ -31,7 +33,9 @@ class EstrategiaServiceTest {
 
     private final EstrategiaRepository estrategiaRepository = mock(EstrategiaRepository.class);
     private final MongoTemplate mongoTemplate = mock(MongoTemplate.class);
-    private final EstrategiaService estrategiaService = new EstrategiaService(estrategiaRepository, mongoTemplate);
+    private final IdeiaRepository ideiaRepository = mock(IdeiaRepository.class);
+    private final EstrategiaService estrategiaService =
+            new EstrategiaService(estrategiaRepository, mongoTemplate, ideiaRepository);
 
     @BeforeEach
     void autenticarComoLider() {
@@ -111,6 +115,27 @@ class EstrategiaServiceTest {
         // de novo (ela não é "outra").
         verify(estrategiaRepository, times(1)).save(existente);
         verify(estrategiaRepository, times(1)).save(outraVigente);
+    }
+
+    @Test
+    void excluirComIdeiasVinculadasLancaConflito() {
+        Estrategia estrategia = Estrategia.builder().id("id-1").build();
+        when(estrategiaRepository.findById("id-1")).thenReturn(java.util.Optional.of(estrategia));
+        when(ideiaRepository.existsByEstrategiaId("id-1")).thenReturn(true);
+
+        assertThrows(ConflitoException.class, () -> estrategiaService.excluir("id-1"));
+        verify(estrategiaRepository, times(0)).delete(any(Estrategia.class));
+    }
+
+    @Test
+    void excluirSemIdeiasVinculadasExclui() {
+        Estrategia estrategia = Estrategia.builder().id("id-1").build();
+        when(estrategiaRepository.findById("id-1")).thenReturn(java.util.Optional.of(estrategia));
+        when(ideiaRepository.existsByEstrategiaId("id-1")).thenReturn(false);
+
+        estrategiaService.excluir("id-1");
+
+        verify(estrategiaRepository, times(1)).delete(estrategia);
     }
 
     @Test

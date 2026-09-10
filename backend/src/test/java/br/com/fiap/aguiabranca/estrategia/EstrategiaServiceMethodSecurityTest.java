@@ -23,6 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
+import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
 
 /**
  * Prova da matriz de acesso de {@link EstrategiaService} — mesmo padrão de
@@ -46,6 +47,9 @@ class EstrategiaServiceMethodSecurityTest {
 
     @MockitoBean
     private MongoTemplate mongoTemplate;
+
+    @MockitoBean
+    private IdeiaRepository ideiaRepository;
 
     @Autowired
     private EstrategiaService estrategiaService;

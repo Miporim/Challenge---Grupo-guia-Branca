@@ -13,7 +13,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
+import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
 import br.com.fiap.aguiabranca.security.SecurityUtils;
+import br.com.fiap.aguiabranca.shared.ConflitoException;
 import br.com.fiap.aguiabranca.shared.RecursoNaoEncontradoException;
 import lombok.RequiredArgsConstructor;
 
@@ -23,6 +25,7 @@ public class EstrategiaService {
 
     private final EstrategiaRepository estrategiaRepository;
     private final MongoTemplate mongoTemplate;
+    private final IdeiaRepository ideiaRepository;
 
     @PreAuthorize("hasRole('LIDER')")
     public Estrategia criar(EstrategiaRequest request) {
@@ -89,10 +92,11 @@ public class EstrategiaService {
     @PreAuthorize("hasRole('LIDER')")
     public void excluir(String id) {
         Estrategia estrategia = buscarPorId(id);
-        // TODO (Etapa C/D): devolver 409 se houver ideias ou projetos
-        // vinculados a esta estratégia. IdeiaRepository/ProjetoRepository
-        // ainda não existem — implementar quando os pacotes ideia/projeto
-        // forem criados, sem reabrir esta etapa.
+        if (ideiaRepository.existsByEstrategiaId(id)) {
+            throw new ConflitoException("Há ideias vinculadas a esta estratégia");
+        }
+        // TODO (Etapa D): devolver 409 também se houver projetos vinculados
+        // — ProjetoRepository ainda não existe.
         estrategiaRepository.delete(estrategia);
     }
 
