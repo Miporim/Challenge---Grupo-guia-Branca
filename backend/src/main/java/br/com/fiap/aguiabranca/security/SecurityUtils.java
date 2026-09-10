@@ -38,4 +38,17 @@ public final class SecurityUtils {
         }
         return null;
     }
+
+    /**
+     * @return o e-mail do usuário autenticado (guardado em
+     * {@code details} pelo {@code JwtAuthenticationFilter}), ou
+     * {@code null} se anônimo.
+     */
+    public static String getEmail() {
+        Authentication autenticacao = SecurityContextHolder.getContext().getAuthentication();
+        if (autenticacao == null || autenticacao.getDetails() == null) {
+            return null;
+        }
+        return String.valueOf(autenticacao.getDetails());
+    }
 }

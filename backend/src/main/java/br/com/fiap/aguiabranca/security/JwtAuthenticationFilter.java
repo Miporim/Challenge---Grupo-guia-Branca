@@ -47,9 +47,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtService.validarEExtrairClaims(token);
                 String usuarioId = claims.getSubject();
                 String role = claims.get("role", String.class);
+                String email = claims.get("email", String.class);
 
                 var autenticacao = new UsernamePasswordAuthenticationToken(
                         usuarioId, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                // DECISION: e-mail guardado em "details" — não faz parte da
+                // identidade de autenticação, mas a auditoria (Etapa F)
+                // precisa dele em Ator sem uma consulta extra ao banco.
+                autenticacao.setDetails(email);
                 SecurityContextHolder.getContext().setAuthentication(autenticacao);
             } catch (JwtException | IllegalArgumentException ex) {
                 log.debug("Token JWT inválido: {}", ex.getMessage());

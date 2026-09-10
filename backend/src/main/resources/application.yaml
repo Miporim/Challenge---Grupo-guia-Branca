@@ -17,7 +17,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
@@ -25,3 +25,8 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+# Secao 6: correlationId/userId/role no MDC (CorrelationIdFilter), em todo log.
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%15.15t] [cid=%X{correlationId:-} uid=%X{userId:-} role=%X{role:-}] %-40.40logger{39} : %m%n"

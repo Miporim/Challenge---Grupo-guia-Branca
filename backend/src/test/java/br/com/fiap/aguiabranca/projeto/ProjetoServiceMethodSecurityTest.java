@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.security.access.AccessDeniedException;
@@ -25,6 +26,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.estrategia.Estrategia;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaService;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaStatus;
@@ -32,6 +34,8 @@ import br.com.fiap.aguiabranca.ideia.IdeiaService;
 import br.com.fiap.aguiabranca.projeto.dto.CriarProjetoRequest;
 import br.com.fiap.aguiabranca.projeto.dto.ProgressoRequest;
 import br.com.fiap.aguiabranca.projeto.dto.ResultadoRequest;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * Prova da matriz de acesso de {@link ProjetoService} — só role (sem
@@ -48,6 +52,10 @@ class ProjetoServiceMethodSecurityTest {
     @EnableMethodSecurity
     @Configuration
     static class SecurityTestConfig {
+        @Bean
+        MeterRegistry meterRegistry() {
+            return new SimpleMeterRegistry();
+        }
     }
 
     @MockitoBean
@@ -61,6 +69,9 @@ class ProjetoServiceMethodSecurityTest {
 
     @MockitoBean
     private MongoTemplate mongoTemplate;
+
+    @MockitoBean
+    private AuditoriaPublisher auditoriaPublisher;
 
     @Autowired
     private ProjetoService projetoService;

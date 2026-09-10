@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -16,6 +17,8 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import br.com.fiap.aguiabranca.auditoria.Acao;
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.estrategia.Estrategia;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaService;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaStatus;
@@ -26,6 +29,7 @@ import br.com.fiap.aguiabranca.security.SecurityUtils;
 import br.com.fiap.aguiabranca.shared.ConflitoException;
 import br.com.fiap.aguiabranca.shared.RecursoNaoEncontradoException;
 import br.com.fiap.aguiabranca.shared.RequisicaoInvalidaException;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -40,6 +44,8 @@ public class IdeiaService {
     private final IdeiaRepository ideiaRepository;
     private final EstrategiaService estrategiaService;
     private final MongoTemplate mongoTemplate;
+    private final AuditoriaPublisher auditoriaPublisher;
+    private final MeterRegistry meterRegistry;
 
     @PreAuthorize("hasRole('OPERADOR')")
     public Ideia criar(IdeiaRequest request) {
@@ -61,7 +67,13 @@ public class IdeiaService {
                 .atualizadoEm(Instant.now())
                 .build();
 
-        return ideiaRepository.save(ideia);
+        Ideia salva = ideiaRepository.save(ideia);
+
+        meterRegistry.counter("ideias_criadas_total", "estrategia", salva.getEstrategiaId()).increment();
+        auditoriaPublisher.publicar(Acao.CRIAR, "ideia", salva.getId(), null,
+                AuditoriaPublisher.mapa("titulo", salva.getTitulo(), "status", salva.getStatus().name()));
+
+        return salva;
     }
 
     @PreAuthorize("@ideiaSecurity.ehAutor(#id, authentication)")
@@ -71,6 +83,7 @@ public class IdeiaService {
         if (!STATUS_EDITAVEIS.contains(ideia.getStatus())) {
             throw new ConflitoException("Ideia só pode ser editada em RASCUNHO ou SUBMETIDA");
         }
+        Map<String, Object> antes = AuditoriaPublisher.mapa("titulo", ideia.getTitulo(), "status", ideia.getStatus().name());
 
         StatusIdeia novoStatus = validarStatusDeEntrada(request.status() != null ? request.status() : ideia.getStatus());
         Estrategia estrategia = validarEstrategiaVigente(request.estrategiaId());
@@ -83,7 +96,12 @@ public class IdeiaService {
         ideia.setStatus(novoStatus);
         ideia.setAtualizadoEm(Instant.now());
 
-        return ideiaRepository.save(ideia);
+        Ideia salva = ideiaRepository.save(ideia);
+
+        auditoriaPublisher.publicar(Acao.ATUALIZAR, "ideia", salva.getId(), antes,
+                AuditoriaPublisher.mapa("titulo", salva.getTitulo(), "status", salva.getStatus().name()));
+
+        return salva;
     }
 
     @PreAuthorize("hasRole('GESTOR') or @ideiaSecurity.ehAutor(#id, authentication)")
@@ -93,6 +111,8 @@ public class IdeiaService {
             throw new ConflitoException("Ideia aprovada não pode ser excluída");
         }
         ideiaRepository.delete(ideia);
+        auditoriaPublisher.publicar(Acao.EXCLUIR, "ideia", id,
+                AuditoriaPublisher.mapa("titulo", ideia.getTitulo(), "status", ideia.getStatus().name()), null);
     }
 
     /**
@@ -137,7 +157,12 @@ public class IdeiaService {
         }
         ideia.setAtualizadoEm(Instant.now());
 
-        return ideiaRepository.save(ideia);
+        Ideia salva = ideiaRepository.save(ideia);
+
+        auditoriaPublisher.publicar(Acao.PRIORIZAR, "ideia", salva.getId(), null,
+                AuditoriaPublisher.mapa("nota", request.nota(), "totalVotos", salva.getTotalVotos(), "notaMedia", salva.getNotaMedia()));
+
+        return salva;
     }
 
     @PreAuthorize("hasRole('GESTOR')")
@@ -150,14 +175,25 @@ public class IdeiaService {
         if (!STATUS_EM_REVISAO.contains(ideia.getStatus())) {
             throw new ConflitoException("Ideia só pode ser aprovada/reprovada a partir de SUBMETIDA ou EM_ANALISE");
         }
+        String statusAnterior = ideia.getStatus().name();
 
-        // TODO (Etapa F): registrar request.justificativa() no evento de
-        // auditoria APROVAR/REPROVAR — não persistida na ideia (não faz
-        // parte do modelo de dados da seção 3).
         ideia.setStatus(request.status());
         ideia.setAtualizadoEm(Instant.now());
 
-        return ideiaRepository.save(ideia);
+        Ideia salva = ideiaRepository.save(ideia);
+
+        if (salva.getStatus() == StatusIdeia.APROVADA) {
+            meterRegistry.counter("ideias_aprovadas_total").increment();
+        }
+        // A justificativa (request.justificativa()) só existe no contrato
+        // HTTP (seção 4) — a ideia não tem esse campo no modelo (seção 3),
+        // então ela vive só aqui, no alteracoes.depois deste evento.
+        Map<String, Object> depois = new java.util.HashMap<>();
+        depois.put("status", salva.getStatus().name());
+        depois.put("justificativa", request.justificativa());
+        auditoriaPublisher.publicar(Acao.APROVAR, "ideia", salva.getId(), AuditoriaPublisher.mapa("status", statusAnterior), depois);
+
+        return salva;
     }
 
     @PreAuthorize("hasRole('OPERADOR')")

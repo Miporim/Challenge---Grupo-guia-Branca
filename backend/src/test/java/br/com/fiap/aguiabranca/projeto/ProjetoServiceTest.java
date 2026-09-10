@@ -20,6 +20,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.estrategia.Estrategia;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaService;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaStatus;
@@ -31,6 +32,7 @@ import br.com.fiap.aguiabranca.projeto.dto.ResultadoRequest;
 import br.com.fiap.aguiabranca.shared.ConflitoException;
 import br.com.fiap.aguiabranca.shared.RecursoNaoEncontradoException;
 import br.com.fiap.aguiabranca.shared.RequisicaoInvalidaException;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * Regras de negócio puras (sem Spring context) — a matriz de acesso tem
@@ -42,8 +44,10 @@ class ProjetoServiceTest {
     private final EstrategiaService estrategiaService = mock(EstrategiaService.class);
     private final IdeiaService ideiaService = mock(IdeiaService.class);
     private final MongoTemplate mongoTemplate = mock(MongoTemplate.class);
-    private final ProjetoService projetoService =
-            new ProjetoService(projetoRepository, estrategiaService, ideiaService, mongoTemplate);
+    private final AuditoriaPublisher auditoriaPublisher = mock(AuditoriaPublisher.class);
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+    private final ProjetoService projetoService = new ProjetoService(
+            projetoRepository, estrategiaService, ideiaService, mongoTemplate, auditoriaPublisher, meterRegistry);
 
     private final Estrategia estrategia = Estrategia.builder().id("estrategia-1").status(EstrategiaStatus.VIGENTE).build();
 
@@ -87,6 +91,7 @@ class ProjetoServiceTest {
         assertEquals(StatusProjeto.NO_PRAZO, projeto.getStatus());
         assertEquals("gestor-1", projeto.getGestorId());
         assertEquals(0, projeto.getPercentualConcluido());
+        assertEquals(1.0, meterRegistry.counter("projetos_criados_total").count());
     }
 
     @Test

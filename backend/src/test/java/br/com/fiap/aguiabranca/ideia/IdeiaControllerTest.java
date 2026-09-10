@@ -29,6 +29,7 @@ import br.com.fiap.aguiabranca.ideia.dto.PriorizacaoRequest;
 import br.com.fiap.aguiabranca.ideia.dto.StatusIdeiaRequest;
 import br.com.fiap.aguiabranca.security.JwtAccessDeniedHandler;
 import br.com.fiap.aguiabranca.security.JwtAuthenticationEntryPoint;
+import br.com.fiap.aguiabranca.security.CorrelationIdFilter;
 import br.com.fiap.aguiabranca.security.JwtAuthenticationFilter;
 import br.com.fiap.aguiabranca.security.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +41,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * {@link IdeiaServiceMethodSecurityTest}, contra o service real.
  */
 @WebMvcTest(IdeiaController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class,
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, CorrelationIdFilter.class, JwtAuthenticationEntryPoint.class,
         JwtAccessDeniedHandler.class, JwtService.class})
 class IdeiaControllerTest {
 

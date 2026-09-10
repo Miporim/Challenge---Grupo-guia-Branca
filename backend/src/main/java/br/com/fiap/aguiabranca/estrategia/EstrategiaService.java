@@ -2,6 +2,7 @@ package br.com.fiap.aguiabranca.estrategia;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,8 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import br.com.fiap.aguiabranca.auditoria.Acao;
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
 import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
 import br.com.fiap.aguiabranca.projeto.ProjetoRepository;
@@ -28,6 +31,7 @@ public class EstrategiaService {
     private final MongoTemplate mongoTemplate;
     private final IdeiaRepository ideiaRepository;
     private final ProjetoRepository projetoRepository;
+    private final AuditoriaPublisher auditoriaPublisher;
 
     @PreAuthorize("hasRole('LIDER')")
     public Estrategia criar(EstrategiaRequest request) {
@@ -52,12 +56,16 @@ public class EstrategiaService {
             encerrarOutrasVigentesDaCampanha(request.campanha(), salva.getId());
         }
 
+        auditoriaPublisher.publicar(Acao.CRIAR, "estrategia", salva.getId(), null,
+                AuditoriaPublisher.mapa("titulo", salva.getTitulo(), "status", salva.getStatus().name()));
+
         return salva;
     }
 
     @PreAuthorize("hasRole('LIDER')")
     public Estrategia atualizar(String id, EstrategiaRequest request) {
         Estrategia estrategia = buscarPorId(id);
+        Map<String, Object> antes = AuditoriaPublisher.mapa("titulo", estrategia.getTitulo(), "status", estrategia.getStatus().name());
 
         estrategia.setTitulo(request.titulo());
         estrategia.setDescricao(request.descricao());
@@ -80,15 +88,24 @@ public class EstrategiaService {
             encerrarOutrasVigentesDaCampanha(request.campanha(), salva.getId());
         }
 
+        auditoriaPublisher.publicar(Acao.ATUALIZAR, "estrategia", salva.getId(), antes,
+                AuditoriaPublisher.mapa("titulo", salva.getTitulo(), "status", salva.getStatus().name()));
+
         return salva;
     }
 
     @PreAuthorize("hasRole('LIDER')")
     public Estrategia encerrar(String id) {
         Estrategia estrategia = buscarPorId(id);
+        String statusAnterior = estrategia.getStatus().name();
         estrategia.setStatus(EstrategiaStatus.ENCERRADA);
         estrategia.setAtualizadoEm(Instant.now());
-        return estrategiaRepository.save(estrategia);
+        Estrategia salva = estrategiaRepository.save(estrategia);
+
+        auditoriaPublisher.publicar(Acao.ATUALIZAR, "estrategia", salva.getId(),
+                AuditoriaPublisher.mapa("status", statusAnterior), AuditoriaPublisher.mapa("status", EstrategiaStatus.ENCERRADA.name()));
+
+        return salva;
     }
 
     @PreAuthorize("hasRole('LIDER')")
@@ -101,6 +118,7 @@ public class EstrategiaService {
             throw new ConflitoException("Há projetos vinculados a esta estratégia");
         }
         estrategiaRepository.delete(estrategia);
+        auditoriaPublisher.publicar(Acao.EXCLUIR, "estrategia", id, AuditoriaPublisher.mapa("titulo", estrategia.getTitulo()), null);
     }
 
     public Estrategia buscarPorId(String id) {

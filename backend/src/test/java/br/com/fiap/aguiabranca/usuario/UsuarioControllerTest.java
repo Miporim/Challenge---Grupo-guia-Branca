@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import br.com.fiap.aguiabranca.config.SecurityConfig;
 import br.com.fiap.aguiabranca.security.JwtAccessDeniedHandler;
 import br.com.fiap.aguiabranca.security.JwtAuthenticationEntryPoint;
+import br.com.fiap.aguiabranca.security.CorrelationIdFilter;
 import br.com.fiap.aguiabranca.security.JwtAuthenticationFilter;
 import br.com.fiap.aguiabranca.security.JwtService;
 import br.com.fiap.aguiabranca.usuario.dto.CriarUsuarioRequest;
@@ -35,7 +36,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * {@link UsuarioServiceMethodSecurityTest}, contra o service real.
  */
 @WebMvcTest(UsuarioController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class,
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, CorrelationIdFilter.class, JwtAuthenticationEntryPoint.class,
         JwtAccessDeniedHandler.class, JwtService.class})
 class UsuarioControllerTest {
 

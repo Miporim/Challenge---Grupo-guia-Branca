@@ -2,7 +2,9 @@ package br.com.fiap.aguiabranca.projeto;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +15,8 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import br.com.fiap.aguiabranca.auditoria.Acao;
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.ideia.Ideia;
 import br.com.fiap.aguiabranca.ideia.IdeiaService;
 import br.com.fiap.aguiabranca.projeto.dto.AtualizarProjetoRequest;
@@ -23,6 +27,7 @@ import br.com.fiap.aguiabranca.security.SecurityUtils;
 import br.com.fiap.aguiabranca.shared.ConflitoException;
 import br.com.fiap.aguiabranca.shared.RecursoNaoEncontradoException;
 import br.com.fiap.aguiabranca.shared.RequisicaoInvalidaException;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -33,6 +38,8 @@ public class ProjetoService {
     private final br.com.fiap.aguiabranca.estrategia.EstrategiaService estrategiaService;
     private final IdeiaService ideiaService;
     private final MongoTemplate mongoTemplate;
+    private final AuditoriaPublisher auditoriaPublisher;
+    private final MeterRegistry meterRegistry;
 
     @PreAuthorize("hasRole('GESTOR')")
     public Projeto criar(CriarProjetoRequest request) {
@@ -71,6 +78,10 @@ public class ProjetoService {
             ideiaService.vincularProjeto(request.ideiaOrigemId(), salvo.getId());
         }
 
+        meterRegistry.counter("projetos_criados_total").increment();
+        auditoriaPublisher.publicar(Acao.CRIAR, "projeto", salvo.getId(), null,
+                AuditoriaPublisher.mapa("titulo", salvo.getTitulo(), "investimento", salvo.getInvestimento()));
+
         return salvo;
     }
 
@@ -80,6 +91,8 @@ public class ProjetoService {
         estrategiaService.buscarPorId(request.estrategiaId());
 
         Projeto projeto = buscarPorId(id);
+        Map<String, Object> antes = AuditoriaPublisher.mapa("titulo", projeto.getTitulo(), "investimento", projeto.getInvestimento());
+
         projeto.setTitulo(request.titulo());
         projeto.setDescricao(request.descricao());
         projeto.setEstrategiaId(request.estrategiaId());
@@ -88,12 +101,21 @@ public class ProjetoService {
         projeto.setPrazoFim(request.prazoFim());
         projeto.setAtualizadoEm(Instant.now());
 
-        return projetoRepository.save(projeto);
+        Projeto salvo = projetoRepository.save(projeto);
+
+        auditoriaPublisher.publicar(Acao.ATUALIZAR, "projeto", salvo.getId(), antes,
+                AuditoriaPublisher.mapa("titulo", salvo.getTitulo(), "investimento", salvo.getInvestimento()));
+
+        return salvo;
     }
 
     @PreAuthorize("hasRole('GESTOR')")
     public Projeto atualizarProgresso(String id, ProgressoRequest request) {
         Projeto projeto = buscarPorId(id);
+        Map<String, Object> antes = new HashMap<>();
+        antes.put("etapa", projeto.getEtapa() != null ? projeto.getEtapa().name() : null);
+        antes.put("status", projeto.getStatus() != null ? projeto.getStatus().name() : null);
+        antes.put("percentualConcluido", projeto.getPercentualConcluido());
 
         if (request.status() != null) {
             projeto.setStatus(request.status());
@@ -111,7 +133,15 @@ public class ProjetoService {
         }
         projeto.setAtualizadoEm(Instant.now());
 
-        return projetoRepository.save(projeto);
+        Projeto salvo = projetoRepository.save(projeto);
+
+        Map<String, Object> depois = new HashMap<>();
+        depois.put("etapa", salvo.getEtapa() != null ? salvo.getEtapa().name() : null);
+        depois.put("status", salvo.getStatus() != null ? salvo.getStatus().name() : null);
+        depois.put("percentualConcluido", salvo.getPercentualConcluido());
+        auditoriaPublisher.publicar(Acao.ATUALIZAR, "projeto", salvo.getId(), antes, depois);
+
+        return salvo;
     }
 
     @PreAuthorize("hasRole('GESTOR')")
@@ -132,13 +162,20 @@ public class ProjetoService {
         projeto.setResultados(resultados);
         projeto.setAtualizadoEm(Instant.now());
 
-        return projetoRepository.save(projeto);
+        Projeto salvo = projetoRepository.save(projeto);
+
+        auditoriaPublisher.publicar(Acao.ATUALIZAR, "projeto", salvo.getId(),
+                AuditoriaPublisher.mapa("totalResultados", resultados.size() - 1),
+                AuditoriaPublisher.mapa("totalResultados", resultados.size(), "receita", resultado.getReceita(), "economia", resultado.getEconomia()));
+
+        return salvo;
     }
 
     @PreAuthorize("hasRole('GESTOR')")
     public void excluir(String id) {
         Projeto projeto = buscarPorId(id);
         projetoRepository.delete(projeto);
+        auditoriaPublisher.publicar(Acao.EXCLUIR, "projeto", id, AuditoriaPublisher.mapa("titulo", projeto.getTitulo()), null);
     }
 
     public Projeto buscarPorId(String id) {

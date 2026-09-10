@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -23,11 +24,14 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.estrategia.Estrategia;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaService;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaStatus;
 import br.com.fiap.aguiabranca.ideia.dto.IdeiaRequest;
 import br.com.fiap.aguiabranca.ideia.dto.PriorizacaoRequest;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * Prova da matriz de acesso de {@link IdeiaService}, incluindo a posse
@@ -50,6 +54,10 @@ class IdeiaServiceMethodSecurityTest {
     @EnableMethodSecurity
     @Configuration
     static class SecurityTestConfig {
+        @Bean
+        MeterRegistry meterRegistry() {
+            return new SimpleMeterRegistry();
+        }
     }
 
     @MockitoBean
@@ -60,6 +68,9 @@ class IdeiaServiceMethodSecurityTest {
 
     @MockitoBean
     private MongoTemplate mongoTemplate;
+
+    @MockitoBean
+    private AuditoriaPublisher auditoriaPublisher;
 
     @Autowired
     private IdeiaService ideiaService;

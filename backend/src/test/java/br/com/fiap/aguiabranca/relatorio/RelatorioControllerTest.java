@@ -26,6 +26,7 @@ import br.com.fiap.aguiabranca.relatorio.dto.SerieTemporalItem;
 import br.com.fiap.aguiabranca.projeto.dto.ProjetoResponse;
 import br.com.fiap.aguiabranca.security.JwtAccessDeniedHandler;
 import br.com.fiap.aguiabranca.security.JwtAuthenticationEntryPoint;
+import br.com.fiap.aguiabranca.security.CorrelationIdFilter;
 import br.com.fiap.aguiabranca.security.JwtAuthenticationFilter;
 import br.com.fiap.aguiabranca.security.JwtService;
 
@@ -35,7 +36,7 @@ import br.com.fiap.aguiabranca.security.JwtService;
  * {@link RelatorioServiceMethodSecurityTest}, contra o service real.
  */
 @WebMvcTest(RelatorioController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class,
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, CorrelationIdFilter.class, JwtAuthenticationEntryPoint.class,
         JwtAccessDeniedHandler.class, JwtService.class})
 class RelatorioControllerTest {
 

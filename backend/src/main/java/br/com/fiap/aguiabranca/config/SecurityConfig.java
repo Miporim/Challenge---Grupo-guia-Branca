@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import br.com.fiap.aguiabranca.security.CorrelationIdFilter;
 import br.com.fiap.aguiabranca.security.JwtAccessDeniedHandler;
 import br.com.fiap.aguiabranca.security.JwtAuthenticationEntryPoint;
 import br.com.fiap.aguiabranca.security.JwtAuthenticationFilter;
@@ -36,6 +37,7 @@ public class SecurityConfig {
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorrelationIdFilter correlationIdFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
@@ -46,11 +48,16 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(ROTAS_PUBLICAS).permitAll()
+                        // Seção 4 (Gobernanza): métricas só para o LIDER.
+                        .requestMatchers("/actuator/metrics/**", "/actuator/prometheus").hasRole("LIDER")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // Depois do filtro JWT: precisa do SecurityContext já
+                // povoado para colocar userId/role no MDC (seção 6).
+                .addFilterAfter(correlationIdFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

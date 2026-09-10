@@ -5,6 +5,9 @@ import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import br.com.fiap.aguiabranca.auditoria.Acao;
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
+import br.com.fiap.aguiabranca.auditoria.Ator;
 import br.com.fiap.aguiabranca.security.JwtService;
 import br.com.fiap.aguiabranca.security.LoginRateLimiter;
 import br.com.fiap.aguiabranca.security.SecurityUtils;
@@ -20,8 +23,9 @@ import lombok.RequiredArgsConstructor;
  * Registro, login e {@code /me}. O rate limit e a mensagem idêntica para
  * e-mail inexistente x senha incorreta estão aqui — ver seção 4 e 5.
  *
- * A auditoria de LOGIN/LOGIN_FALHA (seção 6) é responsabilidade da Etapa F
- * (pacote {@code auditoria}, ainda não implementado) — não antecipar aqui.
+ * Audita LOGIN/LOGIN_FALHA diretamente com o e-mail/usuário que tem em
+ * mãos — não usa {@code SecurityUtils} porque no momento do login ainda
+ * não há usuário autenticado no contexto.
  */
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final LoginRateLimiter loginRateLimiter;
     private final UsuarioService usuarioService;
+    private final AuditoriaPublisher auditoriaPublisher;
 
     public UsuarioResponse registrar(RegistroRequest request) {
         Usuario usuario = usuarioService.criarOperador(request);
@@ -57,6 +62,12 @@ public class AuthService {
 
         if (!credenciaisValidas) {
             loginRateLimiter.registrarFalha(email);
+            Ator atorFalha = Ator.builder()
+                    .userId(usuarioEncontrado.map(Usuario::getId).orElse(null))
+                    .email(email)
+                    .role(usuarioEncontrado.map(u -> u.getRole().name()).orElse(null))
+                    .build();
+            auditoriaPublisher.publicarComAtor(atorFalha, Acao.LOGIN_FALHA, "usuario", atorFalha.getUserId(), null, null);
             throw new CredenciaisInvalidasException();
         }
 
@@ -64,6 +75,9 @@ public class AuthService {
 
         Usuario usuario = usuarioEncontrado.get();
         JwtService.TokenGerado tokenGerado = jwtService.gerarToken(usuario);
+
+        Ator ator = Ator.builder().userId(usuario.getId()).email(usuario.getEmail()).role(usuario.getRole().name()).build();
+        auditoriaPublisher.publicarComAtor(ator, Acao.LOGIN, "usuario", usuario.getId(), null, null);
 
         return new LoginResponse(
                 tokenGerado.token(),

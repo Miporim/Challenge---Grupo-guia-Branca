@@ -22,6 +22,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
 import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
 import br.com.fiap.aguiabranca.projeto.ProjetoRepository;
@@ -54,6 +55,9 @@ class EstrategiaServiceMethodSecurityTest {
 
     @MockitoBean
     private ProjetoRepository projetoRepository;
+
+    @MockitoBean
+    private AuditoriaPublisher auditoriaPublisher;
 
     @Autowired
     private EstrategiaService estrategiaService;

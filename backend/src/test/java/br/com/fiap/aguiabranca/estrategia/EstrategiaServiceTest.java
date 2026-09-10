@@ -19,6 +19,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.estrategia.dto.EstrategiaRequest;
 import br.com.fiap.aguiabranca.ideia.IdeiaRepository;
 import br.com.fiap.aguiabranca.projeto.ProjetoRepository;
@@ -36,8 +37,9 @@ class EstrategiaServiceTest {
     private final MongoTemplate mongoTemplate = mock(MongoTemplate.class);
     private final IdeiaRepository ideiaRepository = mock(IdeiaRepository.class);
     private final ProjetoRepository projetoRepository = mock(ProjetoRepository.class);
+    private final AuditoriaPublisher auditoriaPublisher = mock(AuditoriaPublisher.class);
     private final EstrategiaService estrategiaService =
-            new EstrategiaService(estrategiaRepository, mongoTemplate, ideiaRepository, projetoRepository);
+            new EstrategiaService(estrategiaRepository, mongoTemplate, ideiaRepository, projetoRepository, auditoriaPublisher);
 
     @BeforeEach
     void autenticarComoLider() {

@@ -18,6 +18,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import br.com.fiap.aguiabranca.auditoria.AuditoriaPublisher;
 import br.com.fiap.aguiabranca.estrategia.Estrategia;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaService;
 import br.com.fiap.aguiabranca.estrategia.EstrategiaStatus;
@@ -26,6 +27,7 @@ import br.com.fiap.aguiabranca.ideia.dto.PriorizacaoRequest;
 import br.com.fiap.aguiabranca.ideia.dto.StatusIdeiaRequest;
 import br.com.fiap.aguiabranca.shared.ConflitoException;
 import br.com.fiap.aguiabranca.shared.RequisicaoInvalidaException;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * Regras de negócio puras (sem Spring context) — a matriz de acesso tem
@@ -36,7 +38,10 @@ class IdeiaServiceTest {
     private final IdeiaRepository ideiaRepository = mock(IdeiaRepository.class);
     private final EstrategiaService estrategiaService = mock(EstrategiaService.class);
     private final MongoTemplate mongoTemplate = mock(MongoTemplate.class);
-    private final IdeiaService ideiaService = new IdeiaService(ideiaRepository, estrategiaService, mongoTemplate);
+    private final AuditoriaPublisher auditoriaPublisher = mock(AuditoriaPublisher.class);
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+    private final IdeiaService ideiaService =
+            new IdeiaService(ideiaRepository, estrategiaService, mongoTemplate, auditoriaPublisher, meterRegistry);
 
     private final Estrategia estrategiaVigente = Estrategia.builder()
             .id("estrategia-1")
@@ -67,6 +72,7 @@ class IdeiaServiceTest {
         assertEquals(StatusIdeia.SUBMETIDA, ideia.getStatus());
         assertEquals("operador-1", ideia.getAutorId());
         assertEquals(BigDecimal.ZERO, ideia.getNotaMedia());
+        assertEquals(1.0, meterRegistry.counter("ideias_criadas_total", "estrategia", "estrategia-1").count());
     }
 
     @Test
@@ -165,6 +171,17 @@ class IdeiaServiceTest {
         Ideia resultado = ideiaService.decidir("id-1", new StatusIdeiaRequest(StatusIdeia.APROVADA, "ok"));
 
         assertEquals(StatusIdeia.APROVADA, resultado.getStatus());
+        assertEquals(1.0, meterRegistry.counter("ideias_aprovadas_total").count());
+    }
+
+    @Test
+    void decidirReprovarNaoIncrementaContadorDeAprovadas() {
+        Ideia submetida = Ideia.builder().id("id-1").status(StatusIdeia.SUBMETIDA).build();
+        when(ideiaRepository.findById("id-1")).thenReturn(Optional.of(submetida));
+
+        ideiaService.decidir("id-1", new StatusIdeiaRequest(StatusIdeia.REPROVADA, "não atende"));
+
+        assertEquals(0.0, meterRegistry.counter("ideias_aprovadas_total").count());
     }
 
     @Test
