@@ -1,8 +1,7 @@
 package br.com.fiap.challenge_grupo_guia_branca.dto
 
 data class RegisterUser(
-    val userName: String = "",
-    val email: String = "",
-    val senha: String = "",
-    val role: String = ""
+    val name: String,
+    val email: String,
+    val password: String
 )
