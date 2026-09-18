@@ -12,7 +12,9 @@ data class LoginResponse(
 )
 
 data class MeResponse(
-    val email: String
+    val email: String,
+    val name: String,
+    val role: String
 )
 
 interface ApiService {
