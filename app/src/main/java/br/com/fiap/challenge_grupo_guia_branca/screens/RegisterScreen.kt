@@ -15,16 +15,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import br.com.fiap.challenge_grupo_guia_branca.firebase.AuthManager
-import br.com.fiap.challenge_grupo_guia_branca.firebase.FirestoreManager
 import br.com.fiap.challenge_grupo_guia_branca.model.User
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import br.com.fiap.challenge_grupo_guia_branca.api.RetrofitClient
+import br.com.fiap.challenge_grupo_guia_branca.dto.RegisterUser
 
 @Composable
 fun RegisterScreen(navController: NavController) {
 
-    val firestoreManager = remember { FirestoreManager() }
+    val context = LocalContext.current
+
+    val apiService = remember {
+        RetrofitClient.create(context)
+    }
     val coroutineScope = rememberCoroutineScope()
+
     var nome by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
@@ -99,66 +105,57 @@ fun RegisterScreen(navController: NavController) {
 
         Button(
             onClick = {
+
                 if (nome.isBlank() || email.isBlank() || senha.isBlank()) {
                     mensagem = "Preencha nome, email e senha"
                     return@Button
                 }
 
-                mensagem = "Criando conta..."
+                if (nome.isBlank() || email.isBlank() || senha.isBlank()) {
+                    mensagem = "Preencha nome, email e senha"
+                    return@Button
+                }
 
-                AuthManager.register(
-                    email,
-                    senha,
+                coroutineScope.launch {
 
-                    onSuccess = {
-                        AuthManager.updateCurrentUserProfile(
-                            nome = nome,
-                            role = role,
-                            onSuccess = {
-                                coroutineScope.launch {
-                                    val result = firestoreManager.createUserInFirestore(
-                                        userName = nome,
-                                        email = email,
-                                        role = role
-                                    )
+                    try {
 
-                                    result
-                                        .onSuccess {
-                                            mensagem = "Conta criada com sucesso"
-                                            navController.navigate("login") {
-                                                popUpTo("register") {
-                                                    inclusive = true
-                                                }
-                                            }
-                                        }
-                                        .onFailure {
-                                            mensagem = "Conta criada. Firestore bloqueado, mas a role foi salva no Auth."
-                                            navController.navigate("login") {
-                                                popUpTo("register") {
-                                                    inclusive = true
-                                                }
-                                            }
-                                        }
-                                }
-                            },
-                            onError = {
-                                AuthManager.deleteCurrentUser(
-                                    onSuccess = {
-                                        mensagem = "Conta nao criada: erro ao salvar perfil."
-                                    },
-                                    onError = { deleteError ->
-                                        mensagem = "Usuario criado, mas sem perfil: $deleteError"
-                                    }
-                                )
-                            }
+                        val response = apiService.register(
+                            RegisterUser(
+                                name = nome.trim(),
+                                email = email.trim(),
+                                password = senha,
+                                role = role
+                            )
                         )
-                    },
 
-                    onError = {
-                        mensagem = it
+                        if (response.isSuccessful) {
+
+                            mensagem = "Conta criada com sucesso"
+
+                            navController.navigate("login") {
+                                popUpTo("register") {
+                                    inclusive = true
+                                }
+                            }
+
+                        } else {
+
+                            mensagem = when (response.code()) {
+
+                                409 -> "E-mail já cadastrado"
+
+                                400 -> "Dados inválidos"
+
+                                else -> "Erro ao criar conta: ${response.code()}"
+                            }
+                        }
+
+                    } catch (e: Exception) {
+
+                        mensagem = "Erro ao conectar com a API: ${e.message}"
                     }
-                )
-
+                }
             }
         ) {
 
