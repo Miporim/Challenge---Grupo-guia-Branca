@@ -11,17 +11,29 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import br.com.fiap.challenge_grupo_guia_branca.firebase.AuthManager
-import br.com.fiap.challenge_grupo_guia_branca.firebase.FirestoreManager
 import br.com.fiap.challenge_grupo_guia_branca.model.User
 import kotlinx.coroutines.launch
+import br.com.fiap.challenge_grupo_guia_branca.api.RetrofitClient
+import br.com.fiap.challenge_grupo_guia_branca.auth.TokenManager
+import br.com.fiap.challenge_grupo_guia_branca.dto.LoginDTO
 
 @Composable
 fun LoginScreen(navController: NavController) {
 
-    val firestoreManager = remember { FirestoreManager() }
+    // Dependências da API
+
+    val context = LocalContext.current
+
+    val apiService = remember {
+        RetrofitClient.create(context)
+    }
+
+    val tokenManager = remember {
+        TokenManager(context)
+    }
     val coroutineScope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf("") }
@@ -68,53 +80,48 @@ fun LoginScreen(navController: NavController) {
 
                 mensagem = "Entrando..."
 
-                AuthManager.login(
-                    email,
-                    senha,
+                coroutineScope.launch {
 
-                    onSuccess = {
-                        coroutineScope.launch {
-                            firestoreManager.getCurrentUser()
-                                .onSuccess { user ->
-                                    val destination = when (user.role) {
-                                        User.ROLE_OPERADOR -> "home_operador"
-                                        User.ROLE_GESTOR -> "home_gestor"
-                                        User.ROLE_LIDER -> "home_lider"
-                                        else -> "home_operador"
-                                    }
+                    try {
 
-                                    navController.navigate(destination) {
-                                        popUpTo("login") {
-                                            inclusive = true
-                                        }
-                                    }
-                                }
-                                .onFailure {
-                                    val role = AuthManager.getCurrentUserRole()
-                                    val destination = when (role) {
-                                        User.ROLE_OPERADOR -> "home_operador"
-                                        User.ROLE_GESTOR -> "home_gestor"
-                                        User.ROLE_LIDER -> "home_lider"
-                                        else -> null
-                                    }
+                        val response = apiService.login(
+                            LoginDTO(
+                                email = email,
+                                password = senha
+                            )
+                        )
 
-                                    if (destination != null) {
-                                        navController.navigate(destination) {
-                                            popUpTo("login") {
-                                                inclusive = true
-                                            }
-                                        }
-                                    } else {
-                                        mensagem = "Login feito, mas o perfil do usuario nao foi encontrado."
-                                    }
-                                }
+                        tokenManager.saveToken(response.token)
+
+                        val user = apiService.me()
+
+                        val destination = when (user.role) {
+                            User.ROLE_OPERADOR -> "home_operador"
+                            User.ROLE_GESTOR -> "home_gestor"
+                            User.ROLE_LIDER -> "home_lider"
+                            else -> {
+                                mensagem = "Perfil de usuário inválido."
+                                return@launch
+                            }
                         }
-                    },
 
-                    onError = {
-                        mensagem = it
+                        navController.navigate(destination) {
+                            popUpTo("login") {
+                                inclusive = true
+                            }
+                        }
+
+                    } catch (e: Exception) {
+
+                        mensagem = when {
+                            e.message?.contains("401") == true ->
+                                "E-mail ou senha inválidos."
+
+                            else ->
+                                "Erro ao conectar com a API: ${e.message}"
+                        }
                     }
-                )
+                }
 
             }
         ) {
